@@ -42,6 +42,20 @@ files = [
 numpy = ">=1.15.0"
 
 [[package]]
+name = "cabocha-python"
+version = "0.69.3"
+description = "Python wrapper for CaboCha: Japanese Dependency Structure Analyzer"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "cabocha-python-0.69.3.tar.gz", hash = "sha256:5a65a5ff29f12a7e58afaebd915f11ef435d6e85129dfc7d5777dcbba128343c"},
+]
+
+[package.dependencies]
+python-config = "*"
+
+[[package]]
 name = "catalogue"
 version = "2.0.8"
 description = "Super lightweight function registries for your library"
@@ -726,6 +740,17 @@ files = [
 six = "*"
 
 [[package]]
+name = "python-config"
+version = "0.1.2"
+description = "A simple module for reading Python configuration files"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "python-config-0.1.2.tar.gz", hash = "sha256:fcd5006593f94bdb3ede906a63116e7ac7fffb753b91cfaa1df8ce2f91750af2"},
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
@@ -1210,4 +1235,4 @@ test = ["pytest (>=6.0.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9.5"
-content-hash = "03154c25db14b5997a819a7f5a2112990b9ea1f311619bb97081de47ab4edec9"
+content-hash = "447ab1a438f5a1bcedd3d94dacc09b7b365f4863acddd3eb4a6ed53660ed6dcd"

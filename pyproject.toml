@@ -15,6 +15,7 @@ ginza = "^5.1.2"
 ja-ginza = "^5.1.2"
 wheel = "^0.40.0"
 mecab-python3 = "^1.0.6"
+cabocha-python = "^0.69.3"
 
 
 [build-system]
