@@ -1,6 +1,12 @@
 import CaboCha
 import re
 import demoji
+import unicodedata
+from pprint import pprint
+
+
+def zenkaku_to_hankaku(text: str):
+    return unicodedata.normalize("NFKC", text)
 
 
 def clean_text(text: str) -> str:
@@ -35,11 +41,30 @@ def clean_text(text: str) -> str:
 def main():
     cabocha = CaboCha.Parser("-d /opt/homebrew/lib/mecab/dic/mecab-ipadic-neologd")
 
-    text = "1本でも十分満足感があります。"
+    split_pattern = r"[。!?]"
 
-    parsed = cabocha.parse(text)
+    text = input()
 
-    print(parsed.toString(CaboCha.FORMAT_LATTICE))
+    sentence_list = re.split(split_pattern, zenkaku_to_hankaku(text=text))
+
+    token_sentence_list = []
+    path_of_speech_list = ["名詞", "形容詞", "動詞", "副詞"]
+
+    for sentence in sentence_list:
+        if sentence == "":
+            continue
+        parsed = cabocha.parse(clean_text(sentence))
+        token_list = []
+        for i in range(parsed.size()):
+            token = parsed.token(i)
+            token_feature = token.feature.split(",")
+            path_of_speech = token_feature[0]
+            if path_of_speech in path_of_speech_list and not token.surface.isdigit():
+                word = token_feature[6] if token_feature[6] != "*" else token.surface
+                token_list.append(f"{word} {path_of_speech} {token_feature[1]}")
+        token_sentence_list.append(token_list)
+
+    pprint(token_sentence_list)
 
 
 if __name__ == "__main__":
