@@ -3,6 +3,14 @@ import re
 import demoji
 import unicodedata
 from pprint import pprint
+from typing import TypedDict, List
+
+
+class ImpressionWord(TypedDict):
+    chunk_id: int  # 文節のインデックス
+    base: int  # 形態素の原型 or 表層型
+    pos: str  # 品詞
+    dependent_chunk_id: int  # 係先文節のインデックス
 
 
 def zenkaku_to_hankaku(text: str):
@@ -47,21 +55,36 @@ def main():
 
     sentence_list = re.split(split_pattern, zenkaku_to_hankaku(text=text))
 
-    token_sentence_list = []
-    path_of_speech_list = ["名詞", "形容詞", "動詞", "副詞"]
+    token_sentence_list: List[List[ImpressionWord]] = []
+    pos_list = ["名詞", "形容詞", "動詞", "副詞"]
 
     for sentence in sentence_list:
         if sentence == "":
             continue
-        parsed = cabocha.parse(clean_text(sentence))
-        token_list = []
-        for i in range(parsed.size()):
-            token = parsed.token(i)
+
+        tree = cabocha.parse(clean_text(sentence))
+        token_list: List[ImpressionWord] = []
+        chunk_id = -1
+        chunk_link = -1
+
+        for token_index in range(tree.size()):
+            token = tree.token(token_index)
             token_feature = token.feature.split(",")
-            path_of_speech = token_feature[0]
-            if path_of_speech in path_of_speech_list and not token.surface.isdigit():
-                word = token_feature[6] if token_feature[6] != "*" else token.surface
-                token_list.append(f"{word} {path_of_speech} {token_feature[1]}")
+            pos = token_feature[0]
+
+            if token.chunk is not None:
+                chunk_id += 1
+                chunk_link = token.chunk.link
+
+            if pos in pos_list and not token.surface.isdigit():
+                base = token_feature[6] if token_feature[6] != "*" else token.surface
+                impression_word: ImpressionWord = {
+                    "chunk_id": chunk_id,
+                    "base": base,
+                    "pos": pos,
+                    "dependent_chunk_id": chunk_link,
+                }
+                token_list.append(impression_word)
         token_sentence_list.append(token_list)
 
     pprint(token_sentence_list)
