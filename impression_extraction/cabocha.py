@@ -4,6 +4,8 @@ import demoji
 import unicodedata
 from pprint import pprint
 from typing import TypedDict, List
+import pandas as pd
+import os
 
 
 class ImpressionWord(TypedDict):
@@ -46,14 +48,9 @@ def clean_text(text: str) -> str:
     return text
 
 
-def main():
+def get_tokens(text: str) -> List[List[ImpressionWord]]:
     cabocha = CaboCha.Parser("-d /opt/homebrew/lib/mecab/dic/mecab-ipadic-neologd")
-
-    split_pattern = r"[。!?]"
-
-    text = input()
-
-    sentence_list = re.split(split_pattern, zenkaku_to_hankaku(text=text))
+    sentence_list = text.split("\n")
 
     token_sentence_list: List[List[ImpressionWord]] = []
     pos_list = ["名詞", "形容詞", "動詞", "副詞"]
@@ -87,7 +84,34 @@ def main():
                 token_list.append(impression_word)
         token_sentence_list.append(token_list)
 
-    pprint(token_sentence_list)
+    return token_sentence_list
+
+
+def main():
+    current_path = os.path.dirname(os.path.abspath(__file__))
+
+    # description_df = pd.read_csv(
+    #     f"{current_path}/csv/01H2D1FEAJY2NTHM09WE1CH092/01H2D1FEAJY2NTHM09WE1CH092_description.csv",
+    #     sep=",",
+    #     index_col=0,
+    # )
+    # description = description_df.loc[0, "description"]
+
+    review_df = pd.read_csv(
+        f"{current_path}/csv/01H2D1FEAJY2NTHM09WE1CH092/01H2D1FEAJY2NTHM09WE1CH092_review.csv",
+        sep=",",
+        index_col=0,
+    )
+    review_df_sorted = review_df.sort_values(
+        "useful_count", ascending=False
+    ).reset_index(drop=True)
+    print(review_df_sorted)
+    index = 144
+    print("役立ち数", review_df_sorted.loc[index, "useful_count"])
+    print("星の数", review_df_sorted.loc[index, "rating"])
+    review = review_df_sorted.loc[index, "content"]
+    print(review)
+    pprint(get_tokens(text=review))
 
 
 if __name__ == "__main__":
