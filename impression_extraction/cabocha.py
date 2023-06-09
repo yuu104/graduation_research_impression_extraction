@@ -87,15 +87,38 @@ def get_tokens(text: str) -> List[List[ImpressionWord]]:
     return token_sentence_list
 
 
+# 重複しないようにしている
+def get_matching_tokens(
+    description: List[List[ImpressionWord]], review: List[List[ImpressionWord]]
+) -> List[ImpressionWord]:
+    flat_description = [elem for sublist in description for elem in sublist]
+    flat_review = [elem for sublist in review for elem in sublist]
+
+    matching_tokens: List[ImpressionWord] = []
+    base_values = set()
+
+    for description_elem in flat_description:
+        for review_elem in flat_review:
+            if (
+                description_elem["base"] == review_elem["base"]
+                and description_elem["base"] not in base_values
+            ):
+                matching_tokens.append(description_elem)
+                base_values.add(description_elem["base"])
+
+    return matching_tokens
+
+
 def main():
     current_path = os.path.dirname(os.path.abspath(__file__))
 
-    # description_df = pd.read_csv(
-    #     f"{current_path}/csv/01H2D1FEAJY2NTHM09WE1CH092/01H2D1FEAJY2NTHM09WE1CH092_description.csv",
-    #     sep=",",
-    #     index_col=0,
-    # )
-    # description = description_df.loc[0, "description"]
+    description_df = pd.read_csv(
+        f"{current_path}/csv/01H2D1FEAJY2NTHM09WE1CH092/01H2D1FEAJY2NTHM09WE1CH092_description.csv",
+        sep=",",
+        index_col=0,
+    )
+    description = description_df.loc[0, "description"]
+    description_tokens = get_tokens(text=description)
 
     review_df = pd.read_csv(
         f"{current_path}/csv/01H2D1FEAJY2NTHM09WE1CH092/01H2D1FEAJY2NTHM09WE1CH092_review.csv",
@@ -105,13 +128,13 @@ def main():
     review_df_sorted = review_df.sort_values(
         "useful_count", ascending=False
     ).reset_index(drop=True)
-    print(review_df_sorted)
     index = 144
-    print("役立ち数", review_df_sorted.loc[index, "useful_count"])
-    print("星の数", review_df_sorted.loc[index, "rating"])
+    # print("役立ち数", review_df_sorted.loc[index, "useful_count"])
+    # print("星の数", review_df_sorted.loc[index, "rating"])
     review = review_df_sorted.loc[index, "content"]
-    print(review)
-    pprint(get_tokens(text=review))
+    review_tokens = get_tokens(text=review)
+
+    pprint(get_matching_tokens(description=description_tokens, review=review_tokens))
 
 
 if __name__ == "__main__":
