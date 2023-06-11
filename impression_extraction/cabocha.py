@@ -115,6 +115,7 @@ def get_matching_tokens(
 def main():
     current_path = os.path.dirname(os.path.abspath(__file__))
 
+    # 説明文
     description_df = pd.read_csv(
         f"{current_path}/csv/01H2D1FEAJY2NTHM09WE1CH092/01H2D1FEAJY2NTHM09WE1CH092_description.csv",
         sep=",",
@@ -123,6 +124,7 @@ def main():
     description = description_df.loc[0, "description"]
     description_tokens = get_tokens(text=description)
 
+    # レビュー文
     review_df = pd.read_csv(
         f"{current_path}/csv/01H2D1FEAJY2NTHM09WE1CH092/01H2D1FEAJY2NTHM09WE1CH092_review.csv",
         sep=",",
@@ -137,7 +139,10 @@ def main():
     review = review_df_sorted.loc[index, "content"]
     review_tokens = get_tokens(text=review)
 
-    pprint(get_matching_tokens(description=description_tokens, review=review_tokens))
+    # マッチした形態素
+    match_tokens = get_matching_tokens(
+        description=description_tokens, review=review_tokens
+    )
 
 
 if __name__ == "__main__":
