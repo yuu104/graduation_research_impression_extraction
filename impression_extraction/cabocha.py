@@ -12,6 +12,7 @@ class ImpressionWord(TypedDict):
     chunk_id: int  # 文節のインデックス
     base: int  # 形態素の原型 or 表層型
     pos: str  # 品詞
+    pos_detail: str  # 品詞の詳細
     dependent_chunk_id: int  # 係先文節のインデックス
 
 
@@ -68,6 +69,7 @@ def get_tokens(text: str) -> List[List[ImpressionWord]]:
             token = tree.token(token_index)
             token_feature = token.feature.split(",")
             pos = token_feature[0]
+            pos_detail = token_feature[1]
 
             if token.chunk is not None:
                 chunk_id += 1
@@ -79,6 +81,7 @@ def get_tokens(text: str) -> List[List[ImpressionWord]]:
                     "chunk_id": chunk_id,
                     "base": base,
                     "pos": pos,
+                    "pos_detail": pos_detail,
                     "dependent_chunk_id": chunk_link,
                 }
                 token_list.append(impression_word)
