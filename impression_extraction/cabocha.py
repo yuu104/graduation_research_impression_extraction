@@ -1,11 +1,11 @@
 import CaboCha
-import re
-import demoji
-import unicodedata
 from pprint import pprint
 from typing import TypedDict, List
 import pandas as pd
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class ImpressionWord(TypedDict):
@@ -15,41 +15,41 @@ class ImpressionWord(TypedDict):
     dependent_chunk_id: int  # 係先文節のインデックス
 
 
-def zenkaku_to_hankaku(text: str):
-    return unicodedata.normalize("NFKC", text)
+# def zenkaku_to_hankaku(text: str):
+#     return unicodedata.normalize("NFKC", text)
 
 
-def clean_text(text: str) -> str:
-    # 改行コード除去
-    text = text.replace("\n", "").replace("\r", "")
+# def clean_text(text: str) -> str:
+#     # 改行コード除去
+#     text = text.replace("\n", "").replace("\r", "")
 
-    text = text.replace("!", "。").replace("?", "。")
+#     text = text.replace("!", "。").replace("?", "。")
 
-    # URL除去
-    text = re.sub(r"http?://[\w/:%#\$&\?\(\)~\.=\+\-]+", "", text)
-    text = re.sub(r"https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", "", text)
+#     # URL除去
+#     text = re.sub(r"http?://[\w/:%#\$&\?\(\)~\.=\+\-]+", "", text)
+#     text = re.sub(r"https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", "", text)
 
-    # 絵文字除去
-    text = demoji.replace(string=text, repl="")
+#     # 絵文字除去
+#     text = demoji.replace(string=text, repl="")
 
-    # 半角記号除去
-    text = re.compile(
-        '["#$%&\'\\\\()*+,-./:;<=>?@[\\]^_`{|}~「」〔〕""〈〉『』【】＆＊・（）＄＃＠。、？｀＋￥％]'
-    ).sub("", text)
+#     # 半角記号除去
+#     text = re.compile(
+#         '["#$%&\'\\\\()*+,-./:;<=>?@[\\]^_`{|}~「」〔〕""〈〉『』【】＆＊・（）＄＃＠。、？｀＋￥％]'
+#     ).sub("", text)
 
-    # 全角記号除去
-    text = re.sub(
-        "[\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF65\u3000-\u303F]", "", text
-    )
+#     # 全角記号除去
+#     text = re.sub(
+#         "[\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF65\u3000-\u303F]", "", text
+#     )
 
-    # スペース除去
-    text = text.replace(" ", "").replace("　", "")
+#     # スペース除去
+#     text = text.replace(" ", "").replace("　", "")
 
-    return text
+#     return text
 
 
 def get_tokens(text: str) -> List[List[ImpressionWord]]:
-    cabocha = CaboCha.Parser("-d /opt/homebrew/lib/mecab/dic/mecab-ipadic-neologd")
+    cabocha = CaboCha.Parser(os.getenv("NEOLOGD_PATH"))
     sentence_list = text.split("\n")
 
     token_sentence_list: List[List[ImpressionWord]] = []
@@ -59,7 +59,7 @@ def get_tokens(text: str) -> List[List[ImpressionWord]]:
         if sentence == "":
             continue
 
-        tree = cabocha.parse(clean_text(sentence))
+        tree = cabocha.parse(sentence)
         token_list: List[ImpressionWord] = []
         chunk_id = -1
         chunk_link = -1
