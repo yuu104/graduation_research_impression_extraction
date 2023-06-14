@@ -5,6 +5,8 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 import re
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 load_dotenv()
 
@@ -129,6 +131,28 @@ def main():
     match_tokens = get_matching_tokens(
         description=description_tokens, review=review_tokens
     )
+
+    data = []
+    for i in range(len(review_df)):
+        review = review_df_sorted.loc[i, "content"]
+        review_tokens = get_tokens(text=review)
+        match_tokens = get_matching_tokens(
+            description=description_tokens, review=review_tokens
+        )
+        data.append(
+            {
+                "useful_count": int(review_df_sorted.loc[i, "useful_count"]),
+                "count": len(match_tokens),
+            }
+        )
+    data_df = pd.DataFrame(data)
+    correlation_matrix = data_df.corr()
+    print(correlation_matrix)
+
+    # data_df.plot.scatter(x="useful_count", y="count")
+    sns.regplot(x=data_df["useful_count"], y=data_df["count"])
+
+    plt.show()
 
 
 if __name__ == "__main__":
