@@ -4,6 +4,7 @@ from typing import TypedDict, List
 import pandas as pd
 import os
 from dotenv import load_dotenv
+import re
 
 load_dotenv()
 
@@ -16,37 +17,23 @@ class ImpressionWord(TypedDict):
     dependent_chunk_id: int  # 係先文節のインデックス
 
 
-# def zenkaku_to_hankaku(text: str):
-#     return unicodedata.normalize("NFKC", text)
+def is_unwanted_token(token: any) -> bool:
+    token_feature = token.feature.split(",")
+    pos = token_feature[0]
+    pos_detail = token_feature[1]
+    pos_list = ["名詞", "形容詞", "動詞", "副詞"]
 
+    if token.surface.isdigit():  # 数字のみ
+        return True
 
-# def clean_text(text: str) -> str:
-#     # 改行コード除去
-#     text = text.replace("\n", "").replace("\r", "")
+    if not pos in pos_list:
+        return True
 
-#     text = text.replace("!", "。").replace("?", "。")
+    if pos == "形容詞" and (pos_detail == "非自立" or pos_detail == "接尾"):
+        return True
 
-#     # URL除去
-#     text = re.sub(r"http?://[\w/:%#\$&\?\(\)~\.=\+\-]+", "", text)
-#     text = re.sub(r"https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", "", text)
-
-#     # 絵文字除去
-#     text = demoji.replace(string=text, repl="")
-
-#     # 半角記号除去
-#     text = re.compile(
-#         '["#$%&\'\\\\()*+,-./:;<=>?@[\\]^_`{|}~「」〔〕""〈〉『』【】＆＊・（）＄＃＠。、？｀＋￥％]'
-#     ).sub("", text)
-
-#     # 全角記号除去
-#     text = re.sub(
-#         "[\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF65\u3000-\u303F]", "", text
-#     )
-
-#     # スペース除去
-#     text = text.replace(" ", "").replace("　", "")
-
-#     return text
+    if re.compile(r"^[\u3040-\u309F]$").match(token.surface):
+        return True
 
 
 def get_tokens(text: str) -> List[List[ImpressionWord]]:
@@ -54,7 +41,6 @@ def get_tokens(text: str) -> List[List[ImpressionWord]]:
     sentence_list = text.split("\n")
 
     token_sentence_list: List[List[ImpressionWord]] = []
-    pos_list = ["名詞", "形容詞", "動詞", "副詞"]
 
     for sentence in sentence_list:
         if sentence == "":
@@ -75,7 +61,7 @@ def get_tokens(text: str) -> List[List[ImpressionWord]]:
                 chunk_id += 1
                 chunk_link = token.chunk.link
 
-            if pos in pos_list and not token.surface.isdigit():
+            if not is_unwanted_token(token=token):
                 base = token_feature[6] if token_feature[6] != "*" else token.surface
                 impression_word: ImpressionWord = {
                     "chunk_id": chunk_id,
