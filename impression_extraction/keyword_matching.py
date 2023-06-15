@@ -22,9 +22,27 @@ class ImpressionWord(TypedDict):
 
 def is_unwanted_token(token: any) -> bool:
     token_feature = token.feature.split(",")
+    token_base = token_feature[6] if token_feature[6] != "*" else token.surface
     pos = token_feature[0]
     pos_detail = token_feature[1]
     pos_list = ["名詞", "形容詞", "動詞", "副詞"]
+    unwanted_word = [
+        "する",
+        "ある",
+        "てる",
+        "思う",
+        "なる",
+        "商品",
+        "よく",
+        "まず",
+        "それぞれ",
+        "ヶ月",
+        "私",
+        "そのもの",
+        "次",
+        "よう",
+        "ない",
+    ]
 
     if token.surface.isdigit():  # 数字のみ
         return True
@@ -39,6 +57,9 @@ def is_unwanted_token(token: any) -> bool:
         return True
 
     if re.compile(r"^[\u3040-\u309F]$").match(token.surface):
+        return True
+
+    if token_base in unwanted_word:
         return True
 
 
