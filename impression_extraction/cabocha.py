@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import re
 import matplotlib.pyplot as plt
 import seaborn as sns
+from utils import remove_duplicate
 
 load_dotenv()
 
@@ -118,36 +119,32 @@ def main():
         sep=",",
         index_col=0,
     )
-    review_df_sorted = review_df.sort_values(
-        "useful_count", ascending=False
-    ).reset_index(drop=True)
-    index = 144
-    # print("役立ち数", review_df_sorted.loc[index, "useful_count"])
-    # print("星の数", review_df_sorted.loc[index, "rating"])
-    review = review_df_sorted.loc[index, "content"]
-    review_tokens = get_tokens(text=review)
-
-    # マッチした形態素
-    match_tokens = get_matching_tokens(
-        description=description_tokens, review=review_tokens
-    )
 
     data = []
+    total_match_tokens: List[ImpressionWord] = []
     for i in range(len(review_df)):
-        review = review_df_sorted.loc[i, "content"]
+        review = review_df.loc[i, "content"]
         review_tokens = get_tokens(text=review)
         match_tokens = get_matching_tokens(
             description=description_tokens, review=review_tokens
         )
+        total_match_tokens.extend(match_tokens)
         data.append(
             {
-                "useful_count": int(review_df_sorted.loc[i, "useful_count"]),
+                "useful_count": int(review_df.loc[i, "useful_count"]),
                 "count": len(match_tokens),
             }
         )
     data_df = pd.DataFrame(data)
     correlation_matrix = data_df.corr()
     print(correlation_matrix)
+    total_match_tokens = remove_duplicate.remove_duplicate_dict_array_items(
+        items=total_match_tokens, key_name="base"
+    )
+    total_match_tokens_df = pd.DataFrame(total_match_tokens)
+    total_match_tokens_df.to_csv(
+        f"{current_path}/csv/01H2D1FEAJY2NTHM09WE1CH092/01H2D1FEAJY2NTHM09WE1CH092_match_tokens.csv"
+    )
 
     # data_df.plot.scatter(x="useful_count", y="count")
     sns.regplot(x=data_df["useful_count"], y=data_df["count"])
