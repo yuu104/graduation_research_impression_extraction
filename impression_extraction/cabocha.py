@@ -32,6 +32,9 @@ def is_unwanted_token(token: any) -> bool:
     if not pos in pos_list:
         return True
 
+    if pos == "名詞" and (pos_detail == "数"):
+        return True
+
     if pos == "形容詞" and (pos_detail == "非自立" or pos_detail == "接尾"):
         return True
 
