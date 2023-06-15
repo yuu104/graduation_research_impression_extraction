@@ -2,6 +2,7 @@ import CaboCha
 from pprint import pprint
 from typing import TypedDict, List
 import pandas as pd
+from pandas import DataFrame
 import os
 from dotenv import load_dotenv
 import re
@@ -18,6 +19,23 @@ class ImpressionWord(TypedDict):
     pos: str  # 品詞
     pos_detail: str  # 品詞の詳細
     dependent_chunk_id: int  # 係先文節のインデックス
+
+
+class CorrelationPair(TypedDict):
+    useful_count: str
+    count: str
+
+
+current_path = os.path.dirname(os.path.abspath(__file__))
+
+
+def get_all_folder_names(root_folder_path: str) -> List[str]:
+    folder_names = []
+    for root, folders, _ in os.walk(root_folder_path):
+        for folder in folders:
+            folder_path = os.path.join(root, folder)
+            folder_names.append(folder_path.split("/")[-1])
+    return folder_names
 
 
 def is_unwanted_token(token: any) -> bool:
@@ -125,26 +143,12 @@ def get_matching_tokens(
     return matching_tokens
 
 
-def main():
-    current_path = os.path.dirname(os.path.abspath(__file__))
-
-    # 説明文
-    description_df = pd.read_csv(
-        f"{current_path}/csv/01H2D1FEAJY2NTHM09WE1CH092/01H2D1FEAJY2NTHM09WE1CH092_description.csv",
-        sep=",",
-        index_col=0,
-    )
-    description = description_df.loc[0, "description"]
-    description_tokens = get_tokens(text=description)
-
-    # レビュー文
-    review_df = pd.read_csv(
-        f"{current_path}/csv/01H2D1FEAJY2NTHM09WE1CH092/01H2D1FEAJY2NTHM09WE1CH092_review.csv",
-        sep=",",
-        index_col=0,
-    )
-
-    data = []
+def get_correation_pair(
+    description_tokens: List[List[ImpressionWord]],
+    review_df: DataFrame,
+    item_folder_name: str,
+) -> List[CorrelationPair]:
+    data: List[CorrelationPair] = []
     total_match_tokens: List[ImpressionWord] = []
     for i in range(len(review_df)):
         review = review_df.loc[i, "content"]
@@ -159,19 +163,52 @@ def main():
                 "count": len(match_tokens),
             }
         )
-    data_df = pd.DataFrame(data)
-    correlation_matrix = data_df.corr()
-    print(correlation_matrix)
     total_match_tokens = remove_duplicate.remove_duplicate_dict_array_items(
         items=total_match_tokens, key_name="base"
     )
     total_match_tokens_df = pd.DataFrame(total_match_tokens)
     total_match_tokens_df.to_csv(
-        f"{current_path}/csv/01H2D1FEAJY2NTHM09WE1CH092/01H2D1FEAJY2NTHM09WE1CH092_match_tokens.csv"
+        f"{current_path}/csv/{item_folder_name}/{item_folder_name}_match_tokens.csv"
     )
+    return data
 
-    # data_df.plot.scatter(x="useful_count", y="count")
-    sns.regplot(x=data_df["useful_count"], y=data_df["count"])
+
+def main():
+    item_folder_names = get_all_folder_names(f"{current_path}/csv")
+
+    correlation_pair: List[CorrelationPair] = []
+    for item_folder_name in item_folder_names:
+        # 説明文
+        description_df = pd.read_csv(
+            f"{current_path}/csv/{item_folder_name}/{item_folder_name}_description.csv",
+            sep=",",
+            index_col=0,
+        )
+        description = description_df.loc[0, "description"]
+        description_tokens = get_tokens(text=description)
+
+        # レビュー文
+        review_df = pd.read_csv(
+            f"{current_path}/csv/{item_folder_name}/{item_folder_name}_review.csv",
+            sep=",",
+            index_col=0,
+        )
+
+        correlation_pair.extend(
+            get_correation_pair(
+                description_tokens=description_tokens,
+                review_df=review_df,
+                item_folder_name=item_folder_name,
+            )
+        )
+    correlation_pair_df = pd.DataFrame(correlation_pair)
+    correlation_pair_df.to_csv(f"{current_path}/csv/correlation_pair.csv", sep=",")
+    correlation_matrix = correlation_pair_df.corr()
+    print(correlation_matrix)
+    print(correlation_pair_df)
+
+    # correlation_pair_df.plot.scatter(x="useful_count", y="count")
+    sns.regplot(x=correlation_pair_df["useful_count"], y=correlation_pair_df["count"])
 
     plt.show()
 
