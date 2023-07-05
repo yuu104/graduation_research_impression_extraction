@@ -10,13 +10,14 @@ python = "^3.9.5"
 pyknp = "^0.6.1"
 pandas = "^2.0.1"
 demoji = "^1.1.0"
-ginza = "^5.1.2"
-ja-ginza = "^5.1.2"
 wheel = "^0.40.0"
 mecab-python3 = "^1.0.6"
 cabocha-python = "^0.69.3"
 python-dotenv = "^1.0.0"
 seaborn = "^0.12.2"
+nltk = "^3.8.1"
+ginza = "^5.1.2"
+ja-ginza-electra = "^5.1.2"
 
 
 [build-system]
