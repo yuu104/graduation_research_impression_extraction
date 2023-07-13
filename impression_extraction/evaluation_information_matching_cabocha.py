@@ -14,9 +14,9 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 
 # 対象・属性・評価表現を表すEnum型
 class TokenType(Enum):
-    Subject = "subject"
-    Attribute = "attribute"
-    Evaluation = "evaluation"
+    Subject = "subject"  # 対象
+    Attribute = "attribute"  # 属性
+    Evaluation = "evaluation"  # 評価表現
 
 
 # 形態素クラス
@@ -40,9 +40,9 @@ class Chunk(TypedDict):
 
 # <対象, 属性, 評価表現>の組み合わせを表すクラス
 class EvaluationInformation(TypedDict):
-    subject: List[Token]
-    attribute: List[Token]
-    evaluation: List[Token]
+    subject: List[Token]  # 対象
+    attribute: List[Token]  # 属性
+    evaluation: List[Token]  # 評価表現
 
 
 def get_all_folder_names(root_folder_path: str) -> List[str]:
