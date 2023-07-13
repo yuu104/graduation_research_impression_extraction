@@ -15,7 +15,7 @@ load_dotenv()
 
 class ImpressionWord(TypedDict):
     chunk_id: int  # 文節のインデックス
-    base: int  # 形態素の原型 or 表層型
+    base: str  # 形態素の原型 or 表層型
     pos: str  # 品詞
     pos_detail: str  # 品詞の詳細
     dependent_chunk_id: int  # 係先文節のインデックス
