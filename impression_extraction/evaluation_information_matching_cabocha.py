@@ -221,14 +221,16 @@ def is_evaluation_expressions(token: Token) -> bool:
         return False
 
 
-def extract_evaluation_expressions(chunk: Chunk) -> None:
+# 文節から<評価表現>を見つける関数
+def find_evaluation_expressions(chunk: Chunk) -> None:
     tokens = chunk["tokens"]
     for token in tokens:
         if is_evaluation_expressions(token=token):
             token["token_type"] = TokenType.Evaluation.value
 
 
-def extract_subject_attribute(chunk_list: List[Chunk]) -> None:
+# 一文から<対象, 属性>を見つける関数
+def find_subject_attribute(chunk_list: List[Chunk]) -> None:
     for chunk in chunk_list:
         tokens = chunk["tokens"]
         if any(token["token_type"] == TokenType.Evaluation.value for token in tokens):
@@ -270,7 +272,9 @@ def extract_subject_attribute(chunk_list: List[Chunk]) -> None:
                         dependent_token["token_type"] = TokenType.Attribute.value
 
 
-def get_evaluation_information(chunk_list: List[Chunk]) -> EvaluationInformation:
+def get_evaluation_information(
+    chunk_list: List[Chunk],
+) -> Union[EvaluationInformation, None]:
     evaluation_information: EvaluationInformation = {
         "subject": [],
         "attribute": [],
@@ -284,7 +288,13 @@ def get_evaluation_information(chunk_list: List[Chunk]) -> EvaluationInformation
                 evaluation_information["attribute"].append(token)
             elif token["token_type"] == TokenType.Evaluation.value:
                 evaluation_information["evaluation"].append(token)
-    return evaluation_information
+    return (
+        evaluation_information
+        if len(evaluation_information["subject"])
+        or len(evaluation_information["attribute"])
+        or len(evaluation_information["evaluation"])
+        else None
+    )
 
 
 def main():
@@ -303,14 +313,17 @@ def main():
         description = description_df.loc[0, "description"]
         sentence_list = description.split("\n")
 
-        description_evaluation_information: List[EvaluationInformation] = []
+        description_evaluation_informations: List[EvaluationInformation] = []
         for sentence in sentence_list:
             chunk_list = get_chunk_list(sentence=sentence)
             if not chunk_list:
                 continue
             for chunk in chunk_list:
-                extract_evaluation_expressions(chunk=chunk)
-            extract_subject_attribute(chunk_list=chunk_list)
+                find_evaluation_expressions(chunk=chunk)
+            find_subject_attribute(chunk_list=chunk_list)
+            evaluation_information = get_evaluation_information(chunk_list=chunk_list)
+            if evaluation_information:
+                description_evaluation_informations.append(evaluation_information)
 
         # レビュー文
         review_df = pd.read_csv(
