@@ -1,5 +1,5 @@
 import os
-from typing import List, TypedDict, Union, Optional
+from typing import List, TypedDict, Union
 from enum import Enum
 from pprint import pprint
 import copy
@@ -231,6 +231,7 @@ def find_evaluation_expressions(chunk: Chunk) -> None:
 
 # 一文から<対象, 属性>を見つける関数
 def find_subject_attribute(chunk_list: List[Chunk]) -> None:
+    # <評価表現> → <対象>, <評価表現> → <属性> の共起パタンに該当する<対象, 属性>　（名詞の場合は<対象>として割り当てる)
     for chunk in chunk_list:
         tokens = chunk["tokens"]
         if any(token["token_type"] == TokenType.Evaluation.value for token in tokens):
@@ -242,6 +243,7 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
                 elif dependent_token["pos"] == "動詞":
                     dependent_token["token_type"] = TokenType.Attribute.value
 
+    # <属性> → <評価表現>, <対象> → <評価表現> の共起パタンに該当する<対象, 属性> （名詞の場合は<対象>として割り当てる)
     for chunk in chunk_list:
         tokens = chunk["tokens"]
         for token in tokens:
@@ -256,6 +258,7 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
                 elif token["pos"] == "動詞":
                     token["token_type"] = TokenType.Attribute.value
 
+    # <対象>{の} → <属性> の共起パタンに該当する<対象, 属性>
     for chunk in chunk_list:
         tokens = chunk["tokens"]
         for index, token in enumerate(tokens):
