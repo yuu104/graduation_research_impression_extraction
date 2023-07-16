@@ -314,10 +314,11 @@ def main():
             index_col=0,
         )
         description = description_df.loc[0, "description"]
-        sentence_list = description.split("\n")
-
+        description_sentence_list = description.split("\n")
         description_evaluation_informations: List[EvaluationInformation] = []
-        for sentence in sentence_list:
+        for sentence in description_sentence_list:
+            if len(sentence) > 100:
+                continue
             chunk_list = get_chunk_list(sentence=sentence)
             if not chunk_list:
                 continue
