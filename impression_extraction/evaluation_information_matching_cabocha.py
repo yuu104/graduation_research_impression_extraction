@@ -332,8 +332,15 @@ def main():
             )
             if evaluation_information:
                 description_evaluation_informations.append(evaluation_information)
+        # description_evaluation_informations_df = pd.DataFrame(
+        #     description_evaluation_informations
+        # )
 
-        # レビュー文
+        # description_evaluation_informations_df.to_csv(
+        #     f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}/{item_folder_name}_description.csv"
+        # )
+
+        # # レビュー文
         review_df = pd.read_csv(
             f"{current_path}/csv/{category_name}/items/{item_folder_name}/{item_folder_name}_review.csv",
             sep=",",
