@@ -180,7 +180,7 @@ def get_chunk_list(sentence: str) -> Union[List[Chunk], None]:
         token = tree.token(token_index)
         if token.chunk is not None:
             if chunk_id != 0:
-                chunk_list.append(chunk)
+                chunk_list.append(conect_compound_words(chunk=chunk))
                 chunk = {}
             chunk["chunk_id"] = chunk_id
             chunk["dependent_chunk_id"] = token.chunk.link
