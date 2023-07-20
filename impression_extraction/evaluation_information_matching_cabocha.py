@@ -40,6 +40,7 @@ class Chunk(TypedDict):
 
 # <対象, 属性, 評価表現>の組み合わせを表すクラス
 class EvaluationInformation(TypedDict):
+    sentence: str  # 一文
     subject: List[Token]  # 対象
     attribute: List[Token]  # 属性
     evaluation: List[Token]  # 評価表現
@@ -276,9 +277,10 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
 
 
 def get_evaluation_information(
-    chunk_list: List[Chunk],
+    chunk_list: List[Chunk], sentence: str
 ) -> Union[EvaluationInformation, None]:
     evaluation_information: EvaluationInformation = {
+        "sentence": sentence,
         "subject": [],
         "attribute": [],
         "evaluation": [],
@@ -325,7 +327,9 @@ def main():
             for chunk in chunk_list:
                 find_evaluation_expressions(chunk=chunk)
             find_subject_attribute(chunk_list=chunk_list)
-            evaluation_information = get_evaluation_information(chunk_list=chunk_list)
+            evaluation_information = get_evaluation_information(
+                chunk_list=chunk_list, sentence=sentence
+            )
             if evaluation_information:
                 description_evaluation_informations.append(evaluation_information)
 
