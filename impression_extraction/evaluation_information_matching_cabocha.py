@@ -319,7 +319,7 @@ def main():
         description_sentence_list = description.split("\n")
         description_evaluation_informations: List[EvaluationInformation] = []
         for sentence in description_sentence_list:
-            if len(sentence) > 100:
+            if len(sentence) > 100:  # センテンスの文字数が長すぎるものは対象外
                 continue
             chunk_list = get_chunk_list(sentence=sentence)
             if not chunk_list:
