@@ -346,6 +346,65 @@ def main():
             sep=",",
             index_col=0,
         )
+        reviews_evaluation_informations: List[EvaluationInformation] = []
+        for i in range(len(review_df)):
+            review = review_df.loc[i, "content"]
+            review_sentence_list = review.split("\n")
+            for sentence in review_sentence_list:
+                chunk_list = get_chunk_list(sentence=sentence)
+                if not chunk_list:
+                    continue
+                for chunk in chunk_list:
+                    find_evaluation_expressions(chunk=chunk)
+                find_subject_attribute(chunk_list=chunk_list)
+                evaluation_information = get_evaluation_information(
+                    chunk_list=chunk_list, sentence=sentence
+                )
+                if evaluation_information:
+                    reviews_evaluation_informations.append(evaluation_information)
+
+        reviews_evaluation_informations_token = list(
+            map(
+                lambda item: {
+                    "sentence": item["sentence"],
+                    "subject": list(
+                        map(
+                            lambda sub_item: sub_item["base"]
+                            if sub_item["base"]
+                            else sub_item["surface"],
+                            item["subject"],
+                        )
+                    ),
+                    "attribute": list(
+                        map(
+                            lambda att_item: att_item["base"]
+                            if att_item["base"]
+                            else att_item["surface"],
+                            item["attribute"],
+                        )
+                    ),
+                    "evaluation": list(
+                        map(
+                            lambda eva_item: eva_item["base"]
+                            if eva_item["base"]
+                            else eva_item["surface"],
+                            item["evaluation"],
+                        )
+                    ),
+                },
+                reviews_evaluation_informations,
+            )
+        )
+        reviews_evaluation_informations_token_df = pd.DataFrame(
+            reviews_evaluation_informations_token
+        )
+
+        os.makedirs(
+            f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}"
+        )
+        reviews_evaluation_informations_token_df.to_csv(
+            f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}/{item_folder_name}_review.csv"
+        )
 
 
 if __name__ == "__main__":
