@@ -104,6 +104,23 @@ def conect_compound_words(chunk: Chunk) -> Chunk:
                 }
             )
             index += 2
+        # elif (
+        #     tokens[index]["pos"] == "名詞"
+        #     and tokens[index]["pos_detail"] == "接尾"
+        #     and tokens[index + 1]["pos"] == "名詞"
+        # ):
+        #     pprint(tokens[index])
+        #     pprint(tokens[index + 1])
+        #     new_tokens.append(
+        #         {
+        #             "surface": tokens[index]["surface"] + tokens[index + 1]["surface"],
+        #             "base": tokens[index]["surface"] + tokens[index + 1]["surface"],
+        #             "pos": "名詞",
+        #             "pos_detail": "一般",
+        #             "token_type": None,
+        #         }
+        #     )
+        #     index += 2
         elif (
             tokens[index + 1]["pos"] == "動詞" and tokens[index + 1]["pos_detail"] == "接尾"
         ):
@@ -239,7 +256,10 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
             dependent_chunk = chunk_list[chunk["dependent_chunk_id"]]
             dependent_tokens = dependent_chunk["tokens"]
             for dependent_token in dependent_tokens:
-                if dependent_token["pos"] == "名詞":
+                if (
+                    dependent_token["pos"] == "名詞"
+                    and dependent_token["pos_detail"] != "形容動詞語幹"
+                ):
                     dependent_token["token_type"] = TokenType.Subject.value
                 elif dependent_token["pos"] == "動詞":
                     dependent_token["token_type"] = TokenType.Attribute.value
@@ -254,7 +274,7 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
                 dependent_token["token_type"] == TokenType.Evaluation.value
                 for dependent_token in dependent_tokens
             ):
-                if token["pos"] == "名詞":
+                if token["pos"] == "名詞" and token["pos_detail"] != "形容動詞語幹":
                     token["token_type"] = TokenType.Subject.value
                 elif token["pos"] == "動詞":
                     token["token_type"] = TokenType.Attribute.value
