@@ -15,38 +15,98 @@ current_path = os.path.dirname(os.path.abspath(__file__))
 evaluation_expressions = get_evaluation_expressions()
 
 
-# 対象・属性・評価表現を表すEnum型
 class TokenType(Enum):
-    Subject = "subject"  # 対象
-    Attribute = "attribute"  # 属性
-    Evaluation = "evaluation"  # 評価表現
+    """
+    <対象, 属性, 評価表現>を表すEnum型
+
+    Attributes
+    ----------
+    Subject: str
+        対象
+    Attribute: str
+        属性
+    Evaluation: str
+        評価表現
+    """
+
+    Subject = "subject"
+    Attribute = "attribute"
+    Evaluation = "evaluation"
 
 
-# 形態素クラス
 class Token(TypedDict):
-    base: str  # 形態素の原型 or 表層型
+    """
+    形態素を表す型
+
+    Attributes
+    ----------
+    base: str
+        形態素の原型 or 表層型
     surface: str
-    pos: str  # 品詞
-    pos_detail: str  # 品詞の詳細
+        形態素の表層型
+    pos: str
+        品詞
+    pos_detail: str
+        品詞の詳細
+    token_type: Union[TokenType, None]
+        形態素が<対象, 属性, 評価表現>の中のどれに概要するか又はどれにも該当しないかを示す
+    """
+
+    base: str
+    surface: str
+    pos: str
+    pos_detail: str
     token_type: Union[TokenType, None]
 
 
-# 文節クラス
 class Chunk(TypedDict):
-    chunk_id: int  # 文節のインデックス
-    dependent_chunk_id: int  # 係先文節のインデックス
-    head_pos: int  # 主辞
-    func_pos: int  # 機能辞
-    dependent_score: float  # 係り受け関係のスコア
+    """
+    文節を表す型
+
+    Attributes
+    ----------
+    chunk_id: int
+        文節のインデックス
+    dependent_chunk_id: int
+        係先文節のインデックス
+    head_pos: int
+        主辞
+    func_pos: int
+        機能辞
+    dependent_score: float
+        係り受け関係のスコア
+    tokens: List[Token]
+        形態素`Token`の配列
+    """
+
+    chunk_id: int
+    dependent_chunk_id: int
+    head_pos: int
+    func_pos: int
+    dependent_score: float
     tokens: List[Token]
 
 
-# <対象, 属性, 評価表現>の組み合わせを表すクラス
 class EvaluationInformation(TypedDict):
-    sentence: str  # 一文
-    subject: List[Token]  # 対象
-    attribute: List[Token]  # 属性
-    evaluation: List[Token]  # 評価表現
+    """
+    <対象, 属性, 評価表現>の組み合わせを表すクラス
+
+    Attributes
+    ----------
+    sentence: str
+        一文
+    subject: List[Token]
+        対象
+    attribute: List[Token]
+        属性
+    evaluation: List[Token]
+        評価表現
+    """
+
+    sentence: str
+    subject: List[Token]
+    attribute: List[Token]
+    evaluation: List[Token]
 
 
 def get_all_folder_names(root_folder_path: str) -> List[str]:
@@ -58,8 +118,21 @@ def get_all_folder_names(root_folder_path: str) -> List[str]:
     return folder_names
 
 
-# 複合語を接続する関数
 def conect_compound_words(chunk: Chunk) -> Chunk:
+    """
+    複合語を接続する関数
+    - 文節内で複合語となる形態素を結合する
+
+    Parameters
+    ----------
+    chunk: Chunk
+        文節
+
+    Returns
+    -------
+    _: Chunk
+        文節
+    """
     tokens = copy.deepcopy(chunk["tokens"])
     new_tokens: List[Token] = []
 
@@ -182,8 +255,20 @@ def conect_compound_words(chunk: Chunk) -> Chunk:
     }
 
 
-# 一文から`Chunk`型のリストを生成する関数
 def get_chunk_list(sentence: str) -> Union[List[Chunk], None]:
+    """
+    一文から文節のリストを生成する関数
+
+    Parameters
+    ----------
+    sentence: str
+        1センテンスの文字列
+
+    Returns
+    -------
+    _: Union[List[Chunk], None]
+        `Chunk`型の文節リスト
+    """
     cabocha = CaboCha.Parser(os.getenv("NEOLOGD_PATH"))
 
     if sentence == "":
@@ -252,16 +337,31 @@ def is_evaluation_expressions(token: Token) -> bool:
         return False
 
 
-# 文節から<評価表現>を見つける関数
 def find_evaluation_expressions(chunk: Chunk) -> None:
+    """
+    文節から<評価表現>を見つける関数
+
+    Parameters
+    ----------
+    chunk: Chunk
+        文節
+    """
     tokens = chunk["tokens"]
     for token in tokens:
         if is_evaluation_expressions(token=token):
             token["token_type"] = TokenType.Evaluation.value
 
 
-# 一文から<対象, 属性>を見つける関数
 def find_subject_attribute(chunk_list: List[Chunk]) -> None:
+    """
+    一文から<対象, 属性>を見つける関数
+
+    Parameters
+    ----------
+    chunk_list: List[Chunk]
+        文節リスト
+    """
+
     # <評価表現> → <対象>, <評価表現> → <属性> の共起パタンに該当する<対象, 属性>　（名詞の場合は<対象>として割り当てる)
     for chunk in chunk_list:
         tokens = chunk["tokens"]
