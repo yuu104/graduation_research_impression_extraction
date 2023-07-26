@@ -419,6 +419,23 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
 def get_evaluation_information(
     chunk_list: List[Chunk], sentence: str
 ) -> Union[EvaluationInformation, None]:
+    """
+    評価情報を取得する
+    - <対象, 属性>が存在しない or <評価表現>が存在しない場合は取得対象外
+
+    Parameters
+    ----------
+    chunk_list: List[Chunk]
+        文節`Chunk`型のリスト
+    sentence: str
+        1センテンスの文字列
+
+    Returns
+    -------
+    _: Union[EvaluationInformation, None]
+        評価情報
+    """
+
     evaluation_information: EvaluationInformation = {
         "sentence": sentence,
         "subject": [],
@@ -435,9 +452,11 @@ def get_evaluation_information(
                 evaluation_information["evaluation"].append(token)
     return (
         evaluation_information
-        if len(evaluation_information["subject"])
-        or len(evaluation_information["attribute"])
-        or len(evaluation_information["evaluation"])
+        if (
+            len(evaluation_information["subject"])
+            or len(evaluation_information["attribute"])
+        )
+        and len(evaluation_information["evaluation"])
         else None
     )
 
