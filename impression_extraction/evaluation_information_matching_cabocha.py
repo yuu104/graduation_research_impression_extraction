@@ -6,10 +6,13 @@ import copy
 import CaboCha
 import pandas as pd
 from dotenv import load_dotenv
+from evaluation_expressions_dic import get_evaluation_expressions
 
 load_dotenv()
 
 current_path = os.path.dirname(os.path.abspath(__file__))
+
+evaluation_expressions = get_evaluation_expressions()
 
 
 # 対象・属性・評価表現を表すEnum型
@@ -109,8 +112,6 @@ def conect_compound_words(chunk: Chunk) -> Chunk:
         #     and tokens[index]["pos_detail"] == "接尾"
         #     and tokens[index + 1]["pos"] == "名詞"
         # ):
-        #     pprint(tokens[index])
-        #     pprint(tokens[index + 1])
         #     new_tokens.append(
         #         {
         #             "surface": tokens[index]["surface"] + tokens[index + 1]["surface"],
@@ -226,14 +227,26 @@ def get_chunk_list(sentence: str) -> Union[List[Chunk], None]:
 
 
 def is_evaluation_expressions(token: Token) -> bool:
+    surface = token["surface"]
+    base = token["base"]
     pos = token["pos"]
     pos_detail = token["pos_detail"]
+    match_tokens = list(
+        filter(
+            lambda item: item.get("word") in [surface, base]
+            and item["pos"] == pos
+            and item["pos_detail"] == pos_detail,
+            evaluation_expressions,
+        )
+    )
 
     if (
         pos == "形容詞"
         or (pos == "名詞" and pos_detail == "ナイ形容動詞語幹")
         or (pos == "名詞" and pos_detail == "形容動詞語幹")
     ):
+        return True
+    elif len(match_tokens):
         return True
     else:
         return False
@@ -256,6 +269,8 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
             dependent_chunk = chunk_list[chunk["dependent_chunk_id"]]
             dependent_tokens = dependent_chunk["tokens"]
             for dependent_token in dependent_tokens:
+                if dependent_token["token_type"] == TokenType.Evaluation.value:
+                    continue
                 if (
                     dependent_token["pos"] == "名詞"
                     and dependent_token["pos_detail"] != "形容動詞語幹"
@@ -268,6 +283,8 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
     for chunk in chunk_list:
         tokens = chunk["tokens"]
         for token in tokens:
+            if token["token_type"] == TokenType.Evaluation.value:
+                continue
             dependent_chunk = chunk_list[chunk["dependent_chunk_id"]]
             dependent_tokens = dependent_chunk["tokens"]
             if any(
@@ -287,12 +304,15 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
                 index != len(tokens) - 1
                 and token["pos"] == "名詞"
                 and tokens[index + 1]["surface"] == "の"
+                and token["token_type"] != TokenType.Evaluation.value
             ):
                 token["token_type"] = TokenType.Subject.value
                 dependent_chunk = chunk_list[chunk["dependent_chunk_id"]]
                 dependent_tokens = dependent_chunk["tokens"]
                 for dependent_token in dependent_tokens:
-                    if dependent_token["pos"] == "名詞" or dependent_token["pos"] == "動詞":
+                    if (
+                        dependent_token["pos"] == "名詞" or dependent_token["pos"] == "動詞"
+                    ) and dependent_token["token_type"] != TokenType.Evaluation.value:
                         dependent_token["token_type"] = TokenType.Attribute.value
 
 
