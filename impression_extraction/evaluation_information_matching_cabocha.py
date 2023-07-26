@@ -7,6 +7,7 @@ import CaboCha
 import pandas as pd
 from dotenv import load_dotenv
 from evaluation_expressions_dic import get_evaluation_expressions
+from utils.folder_file import get_all_folder_names
 
 load_dotenv()
 
@@ -107,15 +108,6 @@ class EvaluationInformation(TypedDict):
     subject: List[Token]
     attribute: List[Token]
     evaluation: List[Token]
-
-
-def get_all_folder_names(root_folder_path: str) -> List[str]:
-    folder_names = []
-    for root, folders, _ in os.walk(root_folder_path):
-        for folder in folders:
-            folder_path = os.path.join(root, folder)
-            folder_names.append(folder_path.split("/")[-1])
-    return folder_names
 
 
 def conect_compound_words(chunk: Chunk) -> Chunk:
