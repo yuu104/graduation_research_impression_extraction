@@ -1,4 +1,5 @@
 import os
+import re
 from typing import List, TypedDict, Union
 from enum import Enum
 from pprint import pprint
@@ -482,6 +483,35 @@ def get_evaluation_information(
         and len(evaluation_information["evaluation"])
         else None
     )
+
+
+def get_description_keywords(chunk_list: List[Chunk]) -> List[str]:
+    """
+    説明文のセンテンスからキーワード（名詞・動詞）を抽出し、リストとして返す
+
+    Parameters
+    ----------
+    chunk_list: List[Chunk]
+        説明文の1センテンス
+
+    Returns
+    -------
+    _: List[str]
+        説明文から抽出したキーワード
+    """
+
+    keywords: List[str] = []
+    for chunk in chunk_list:
+        for token in chunk["tokens"]:
+            token_word = get_token_word(token=token)
+            if (
+                token["pos"] in ["名詞", "動詞"]
+                and token["pos_detail"] != "数"
+                and re.compile(r"^[\u3040-\u309F]$").match(token.surface)
+                and not token_word in stopwords
+            ):
+                keywords.append(token_word)
+    return keywords
 
 
 def main():
