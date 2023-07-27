@@ -110,6 +110,25 @@ class EvaluationInformation(TypedDict):
     evaluation: List[Token]
 
 
+def get_token_word(token: Token) -> str:
+    """
+    形態素の原型 or 表層型を返す
+    - 原型を優先して返す
+    - 原型が存在しなければ、表層型を返す
+
+    Parameters
+    ----------
+    token: Token
+        形態素
+
+    Returns
+    -------
+    形態素の原型 or 表層型となる文字列
+    """
+
+    return token["base"] if token["base"] else token["surface"]
+
+
 def conect_compound_words(chunk: Chunk) -> Chunk:
     """
     複合語を接続する関数
@@ -523,25 +542,19 @@ def main():
                     "sentence": item["sentence"],
                     "subject": list(
                         map(
-                            lambda sub_item: sub_item["base"]
-                            if sub_item["base"]
-                            else sub_item["surface"],
+                            lambda sub_item: get_token_word(token=sub_item),
                             item["subject"],
                         )
                     ),
                     "attribute": list(
                         map(
-                            lambda att_item: att_item["base"]
-                            if att_item["base"]
-                            else att_item["surface"],
+                            lambda att_item: get_token_word(token=att_item),
                             item["attribute"],
                         )
                     ),
                     "evaluation": list(
                         map(
-                            lambda eva_item: eva_item["base"]
-                            if eva_item["base"]
-                            else eva_item["surface"],
+                            lambda eva_item: get_token_word(token=eva_item),
                             item["evaluation"],
                         )
                     ),
