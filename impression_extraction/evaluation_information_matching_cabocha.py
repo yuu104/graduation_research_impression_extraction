@@ -6,7 +6,7 @@ import copy
 import CaboCha
 import pandas as pd
 from dotenv import load_dotenv
-from evaluation_expressions_dic import get_evaluation_expressions
+from dictionary import get_evaluation_expressions, get_stopwords
 from utils.folder_file import get_all_folder_names
 
 load_dotenv()
@@ -14,6 +14,7 @@ load_dotenv()
 current_path = os.path.dirname(os.path.abspath(__file__))
 
 evaluation_expressions = get_evaluation_expressions()
+stopwords = get_stopwords()
 
 
 class TokenType(Enum):
@@ -341,7 +342,7 @@ def is_evaluation_expressions(token: Token) -> bool:
         pos == "形容詞"
         or (pos == "名詞" and pos_detail == "ナイ形容動詞語幹")
         or (pos == "名詞" and pos_detail == "形容動詞語幹")
-    ):
+    ) and not base in stopwords:
         return True
     elif len(match_tokens):
         return True
@@ -382,7 +383,11 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
             dependent_chunk = chunk_list[chunk["dependent_chunk_id"]]
             dependent_tokens = dependent_chunk["tokens"]
             for dependent_token in dependent_tokens:
-                if dependent_token["token_type"] == TokenType.Evaluation.value:
+                dependent_token_word = get_token_word(token=dependent_token)
+                if (
+                    dependent_token["token_type"] == TokenType.Evaluation.value
+                    or dependent_token_word in stopwords
+                ):
                     continue
                 if (
                     dependent_token["pos"] == "名詞"
@@ -396,7 +401,11 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
     for chunk in chunk_list:
         tokens = chunk["tokens"]
         for token in tokens:
-            if token["token_type"] == TokenType.Evaluation.value:
+            token_word = get_token_word(token=token)
+            if (
+                token["token_type"] == TokenType.Evaluation.value
+                or token_word in stopwords
+            ):
                 continue
             dependent_chunk = chunk_list[chunk["dependent_chunk_id"]]
             dependent_tokens = dependent_chunk["tokens"]
