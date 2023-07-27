@@ -398,13 +398,14 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
                 and tokens[index + 1]["surface"] == "の"
                 and token["token_type"] != TokenType.Evaluation.value
             ):
-                token["token_type"] = TokenType.Subject.value
                 dependent_chunk = chunk_list[chunk["dependent_chunk_id"]]
                 dependent_tokens = dependent_chunk["tokens"]
                 for dependent_token in dependent_tokens:
                     if (
-                        dependent_token["pos"] == "名詞" or dependent_token["pos"] == "動詞"
-                    ) and dependent_token["token_type"] != TokenType.Evaluation.value:
+                        dependent_token["token_type"]
+                        and dependent_token["token_type"] != TokenType.Evaluation.value
+                    ):
+                        token["token_type"] = TokenType.Subject.value
                         dependent_token["token_type"] = TokenType.Attribute.value
 
 
