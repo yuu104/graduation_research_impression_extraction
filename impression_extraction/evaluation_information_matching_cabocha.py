@@ -125,6 +125,7 @@ def conect_compound_words(chunk: Chunk) -> Chunk:
     _: Chunk
         文節
     """
+
     tokens = copy.deepcopy(chunk["tokens"])
     new_tokens: List[Token] = []
 
@@ -261,11 +262,11 @@ def get_chunk_list(sentence: str) -> Union[List[Chunk], None]:
     _: Union[List[Chunk], None]
         `Chunk`型の文節リスト
     """
-    cabocha = CaboCha.Parser(os.getenv("NEOLOGD_PATH"))
 
     if sentence == "":
         return None
 
+    cabocha = CaboCha.Parser(os.getenv("NEOLOGD_PATH"))
     tree = cabocha.parse(sentence)
 
     chunk_id = 0
@@ -338,6 +339,7 @@ def find_evaluation_expressions(chunk: Chunk) -> None:
     chunk: Chunk
         文節
     """
+
     tokens = chunk["tokens"]
     for token in tokens:
         if is_evaluation_expressions(token=token):
