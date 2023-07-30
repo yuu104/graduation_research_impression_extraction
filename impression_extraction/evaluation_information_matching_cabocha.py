@@ -9,6 +9,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from dictionary import get_evaluation_expressions, get_stopwords
 from utils.folder_file import get_all_folder_names
+from utils.array_dic import count_elements_in_range
 
 load_dotenv()
 
@@ -92,7 +93,7 @@ class Chunk(TypedDict):
 
 class EvaluationInformation(TypedDict):
     """
-    <対象, 属性, 評価表現>の組み合わせを表すクラス
+    <対象, 属性, 評価表現>の組み合わせを表す型
 
     Attributes
     ----------
@@ -110,6 +111,28 @@ class EvaluationInformation(TypedDict):
     subject: List[Token]
     attribute: List[Token]
     evaluation: List[Token]
+
+
+class CorrelationPair(TypedDict):
+    """
+    相関関係を分析する2変数を表す型
+
+    Attributes
+    ----------
+    match_count: int
+        説明文中のキーワードとレビューの<対象, 属性>のマッチ数
+    useful_count: int
+        役立ち数
+    match_tokens: List[str]
+        マッチしたキーワード
+    review_text: str
+        レビューテキスト
+    """
+
+    match_count: int
+    useful_count: int
+    match_tokens: List[str]
+    review_text: str
 
 
 def get_token_word(token: Token) -> str:
@@ -194,21 +217,6 @@ def conect_compound_words(chunk: Chunk) -> Chunk:
                 }
             )
             index += 2
-        # elif (
-        #     tokens[index]["pos"] == "名詞"
-        #     and tokens[index]["pos_detail"] == "接尾"
-        #     and tokens[index + 1]["pos"] == "名詞"
-        # ):
-        #     new_tokens.append(
-        #         {
-        #             "surface": tokens[index]["surface"] + tokens[index + 1]["surface"],
-        #             "base": tokens[index]["surface"] + tokens[index + 1]["surface"],
-        #             "pos": "名詞",
-        #             "pos_detail": "一般",
-        #             "token_type": None,
-        #         }
-        #     )
-        #     index += 2
         elif (
             tokens[index + 1]["pos"] == "動詞" and tokens[index + 1]["pos_detail"] == "接尾"
         ):
@@ -507,7 +515,7 @@ def get_description_keywords(chunk_list: List[Chunk]) -> List[str]:
             if (
                 token["pos"] in ["名詞", "動詞"]
                 and token["pos_detail"] != "数"
-                and re.compile(r"^[\u3040-\u309F]$").match(token.surface)
+                and not re.compile(r"^[\u3040-\u309F]$").match(token["surface"])
                 and not token_word in stopwords
             ):
                 keywords.append(token_word)
@@ -520,8 +528,9 @@ def main():
         f"{current_path}/csv/{category_name}/items"
     )
 
+    correlation_pair: List[CorrelationPair] = []
     for item_folder_name in item_folder_names:
-        # 説明文
+        # 説明文からキーワードを抽出し、データフレームを作成
         description_df = pd.read_csv(
             f"{current_path}/csv/{category_name}/items/{item_folder_name}/{item_folder_name}_description.csv",
             sep=",",
@@ -529,30 +538,27 @@ def main():
         )
         description = description_df.loc[0, "description"]
         description_sentence_list = description.split("\n")
-        description_evaluation_informations: List[EvaluationInformation] = []
+        description_keywords: List[str] = []
         for sentence in description_sentence_list:
             if len(sentence) > 100:  # センテンスの文字数が長すぎるものは対象外
                 continue
             chunk_list = get_chunk_list(sentence=sentence)
             if not chunk_list:
                 continue
-            for chunk in chunk_list:
-                find_evaluation_expressions(chunk=chunk)
-            find_subject_attribute(chunk_list=chunk_list)
-            evaluation_information = get_evaluation_information(
-                chunk_list=chunk_list, sentence=sentence
-            )
-            if evaluation_information:
-                description_evaluation_informations.append(evaluation_information)
-        # description_evaluation_informations_df = pd.DataFrame(
-        #     description_evaluation_informations
-        # )
+            description_keywords.extend(get_description_keywords(chunk_list=chunk_list))
+        description_keywords_df = pd.DataFrame(
+            data=list(set(description_keywords)), columns=["keyword"]
+        )
+        os.makedirs(
+            f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}",
+            exist_ok=True,
+        )
+        description_keywords_df.to_csv(
+            f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}/{item_folder_name}_description.csv"
+        )
 
-        # description_evaluation_informations_df.to_csv(
-        #     f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}/{item_folder_name}_description.csv"
-        # )
-
-        # # レビュー文
+        ## レビュー文から印象情報<対象, 属性, 評価表現>を抽出し、データフレームを作成
+        ## 同時に、説明文中のキーワードとレビューの<対象, 属性>のマッチ数をカウントし、相関関係を分析する2変数の辞書配列を作成
         review_df = pd.read_csv(
             f"{current_path}/csv/{category_name}/items/{item_folder_name}/{item_folder_name}_review.csv",
             sep=",",
@@ -560,7 +566,9 @@ def main():
         )
         reviews_evaluation_informations: List[EvaluationInformation] = []
         for i in range(len(review_df)):
-            review = review_df.loc[i, "content"]
+            match_count = 0
+            match_tokens: List[str] = []
+            review: str = review_df.loc[i, "content"]
             review_sentence_list = review.split("\n")
             for sentence in review_sentence_list:
                 chunk_list = get_chunk_list(sentence=sentence)
@@ -573,8 +581,31 @@ def main():
                     chunk_list=chunk_list, sentence=sentence
                 )
                 if evaluation_information:
-                    reviews_evaluation_informations.append(evaluation_information)
+                    subject_words = [
+                        get_token_word(token=token)
+                        for token in evaluation_information["subject"]
+                    ]
+                    attribute_words = [
+                        get_token_word(token=token)
+                        for token in evaluation_information["attribute"]
+                    ]
+                    review_keywords: List[str] = list(
+                        set(subject_words + attribute_words)
+                    )
+                    for review_keyword in review_keywords:
+                        if review_keyword in description_keywords:
+                            match_count += 1
+                            match_tokens.append(review_keyword)
 
+                    reviews_evaluation_informations.append(evaluation_information)
+            correlation_pair.append(
+                {
+                    "useful_count": int(review_df.loc[i, "useful_count"]),
+                    "match_count": match_count,
+                    "match_tokens": match_tokens,
+                    "review_text": review,
+                }
+            )
         reviews_evaluation_informations_token = list(
             map(
                 lambda item: {
@@ -604,13 +635,69 @@ def main():
         reviews_evaluation_informations_token_df = pd.DataFrame(
             reviews_evaluation_informations_token
         )
-
-        os.makedirs(
-            f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}"
-        )
         reviews_evaluation_informations_token_df.to_csv(
             f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}/{item_folder_name}_review.csv"
         )
+
+    ## 役立ち数ごとのレビュー数を表したデータフレームと相関関係の統計処理結果を表したデータフレームを作成
+    correlation_pair_df = pd.DataFrame(data=correlation_pair)
+    correlation_pair_df = correlation_pair_df.sort_values("useful_count").reset_index(
+        drop=True
+    )
+    useful_count_values: List[int] = correlation_pair_df["useful_count"].values
+    useful_count_count = [
+        {
+            "0": count_elements_in_range(useful_count_values, 0, 0),
+            "1": count_elements_in_range(useful_count_values, 1, 1),
+            "2": count_elements_in_range(useful_count_values, 2, 2),
+            "3": count_elements_in_range(useful_count_values, 3, 3),
+            "4": count_elements_in_range(useful_count_values, 4, 4),
+            "5": count_elements_in_range(useful_count_values, 5, 5),
+            "6-10": count_elements_in_range(useful_count_values, 6, 10),
+            "11-20": count_elements_in_range(useful_count_values, 11, 20),
+            "21-30": count_elements_in_range(useful_count_values, 21, 30),
+            "31-40": count_elements_in_range(useful_count_values, 31, 40),
+            "41-50": count_elements_in_range(useful_count_values, 41, 50),
+            "51-": count_elements_in_range(useful_count_values, 51, None),
+        }
+    ]
+    useful_count_count_df = pd.DataFrame(useful_count_count)
+    match_token_rate = [
+        {
+            "0人": correlation_pair_df[correlation_pair_df["useful_count"] == 0][
+                "match_count"
+            ].mean(),
+            "1〜2人": correlation_pair_df[
+                (correlation_pair_df["useful_count"] >= 1)
+                & (correlation_pair_df["useful_count"] <= 2)
+            ]["match_count"].mean(),
+            "3〜4人": correlation_pair_df[
+                (correlation_pair_df["useful_count"] >= 3)
+                & (correlation_pair_df["useful_count"] <= 4)
+            ]["match_count"].mean(),
+            "4〜6人": correlation_pair_df[
+                (correlation_pair_df["useful_count"] >= 5)
+                & (correlation_pair_df["useful_count"] <= 6)
+            ]["match_count"].mean(),
+            "7〜9人": correlation_pair_df[
+                (correlation_pair_df["useful_count"] >= 7)
+                & (correlation_pair_df["useful_count"] <= 9)
+            ]["match_count"].mean(),
+            "10人以上": correlation_pair_df[correlation_pair_df["useful_count"] >= 10][
+                "match_count"
+            ].mean(),
+        }
+    ]
+    match_token_rate_df = pd.DataFrame(match_token_rate)
+    useful_count_count_df.to_csv(
+        f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/useful_count_count.csv"
+    )
+    match_token_rate_df.to_csv(
+        f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/match_token_rate.csv"
+    )
+    correlation_pair_df.to_csv(
+        f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/correlation_pair.csv"
+    )
 
 
 if __name__ == "__main__":
