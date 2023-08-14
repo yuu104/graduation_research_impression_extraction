@@ -125,6 +125,7 @@ class CorrelationPair(TypedDict):
         役立ち数
     match_tokens: List[str]
         マッチしたキーワード
+    evaluation: List[str]
     review_text: str
         レビューテキスト
     """
@@ -132,6 +133,7 @@ class CorrelationPair(TypedDict):
     match_count: int
     useful_count: int
     match_tokens: List[str]
+    evaluation: List[str]
     review_text: str
 
 
@@ -570,6 +572,7 @@ def main():
             match_tokens: List[str] = []
             review: str = review_df.loc[i, "content"]
             review_sentence_list = review.split("\n")
+            evaluation_expressions: List[str] = []
             for sentence in review_sentence_list:
                 chunk_list = get_chunk_list(sentence=sentence)
                 if not chunk_list:
@@ -597,12 +600,21 @@ def main():
                             match_count += 1
                             match_tokens.append(review_keyword)
 
+                    evaluation_expressions.extend(
+                        list(
+                            map(
+                                lambda eva_item: get_token_word(token=eva_item),
+                                evaluation_information["evaluation"],
+                            )
+                        )
+                    )
                     reviews_evaluation_informations.append(evaluation_information)
             correlation_pair.append(
                 {
                     "useful_count": int(review_df.loc[i, "useful_count"]),
                     "match_count": match_count,
                     "match_tokens": match_tokens,
+                    "evaluation": evaluation_expressions,
                     "review_text": review,
                 }
             )
