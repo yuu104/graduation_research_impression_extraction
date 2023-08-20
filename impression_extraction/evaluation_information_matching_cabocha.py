@@ -449,6 +449,18 @@ def find_subject_attribute(chunk_list: List[Chunk]) -> None:
                         token["token_type"] = TokenType.Subject.value
                         dependent_token["token_type"] = TokenType.Attribute.value
 
+    # <対象, 属性>１ {と} <対象, 属性>2 → <評価表現> の共起パタンに該当する <対象, 属性>1
+    all_tokens = [token for chunk in chunk_list for token in chunk["tokens"]]
+    for index, token in enumerate(all_tokens):
+        if index + 2 > len(all_tokens) - 1:
+            break
+        if (
+            token["pos"] == "名詞"
+            and all_tokens[index + 1]["surface"] == "と"
+            and all_tokens[index + 2]["token_type"] == TokenType.Subject.value
+        ):
+            token["token_type"] = TokenType.Subject.value
+
 
 def get_evaluation_information(
     chunk_list: List[Chunk], sentence: str
