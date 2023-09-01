@@ -15,7 +15,6 @@ load_dotenv()
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 
-evaluation_expressions = get_evaluation_expressions()
 stopwords = get_stopwords()
 
 
@@ -335,17 +334,32 @@ def get_chunk_list(sentence: str) -> Union[List[Chunk], None]:
     return chunk_list
 
 
-def is_evaluation_expressions(token: Token) -> bool:
+def is_evaluation_expressions(token: Token, description_keywords: List[str]) -> bool:
+    """
+    引数から受け取ったトークンが評価表現であるかを判定する
+
+    Parameters
+    ----------
+    token: Token
+        トークン情報
+    description_keywords: List[str]
+        説明文から抽出したキーワード
+
+    Returns
+    -------
+    _: bool
+        `True`であれば評価表現
+    """
+
+    evaluation_value_expressions = get_evaluation_expressions()
     surface = token["surface"]
     base = token["base"]
     pos = token["pos"]
     pos_detail = token["pos_detail"]
-    match_tokens = list(
+    match_tokens = list(  # 評価値表見辞書に含まれる単語かどうかを調べる
         filter(
-            lambda item: item.get("word") in [surface, base]
-            and item["pos"] == pos
-            and item["pos_detail"] == pos_detail,
-            evaluation_expressions,
+            lambda item: item in [surface, base],
+            evaluation_value_expressions,
         )
     )
 
@@ -355,13 +369,15 @@ def is_evaluation_expressions(token: Token) -> bool:
         or (pos == "名詞" and pos_detail == "形容動詞語幹")
     ) and not base in stopwords:
         return True
-    elif len(match_tokens):
+    elif len(match_tokens) and not any(
+        item in match_tokens for item in description_keywords
+    ):
         return True
     else:
         return False
 
 
-def find_evaluation_expressions(chunk: Chunk) -> None:
+def find_evaluation_expressions(chunk: Chunk, description_keywords: List[str]) -> None:
     """
     文節から<評価表現>を見つける関数
 
@@ -369,11 +385,15 @@ def find_evaluation_expressions(chunk: Chunk) -> None:
     ----------
     chunk: Chunk
         文節
+    description_keywords: List[str]
+        説明文から抽出したキーワード
     """
 
     tokens = chunk["tokens"]
     for token in tokens:
-        if is_evaluation_expressions(token=token):
+        if is_evaluation_expressions(
+            token=token, description_keywords=description_keywords
+        ):
             token["token_type"] = TokenType.Evaluation.value
 
 
@@ -560,8 +580,9 @@ def main():
             if not chunk_list:
                 continue
             description_keywords.extend(get_description_keywords(chunk_list=chunk_list))
+        description_keywords = set(description_keywords)
         description_keywords_df = pd.DataFrame(
-            data=list(set(description_keywords)), columns=["keyword"]
+            data=list(description_keywords), columns=["keyword"]
         )
         os.makedirs(
             f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}",
@@ -590,7 +611,9 @@ def main():
                 if not chunk_list:
                     continue
                 for chunk in chunk_list:
-                    find_evaluation_expressions(chunk=chunk)
+                    find_evaluation_expressions(
+                        chunk=chunk, description_keywords=description_keywords
+                    )
                 find_subject_attribute(chunk_list=chunk_list)
                 evaluation_information = get_evaluation_information(
                     chunk_list=chunk_list, sentence=sentence
