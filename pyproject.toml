@@ -18,6 +18,7 @@ ginza = "^5.1.2"
 ja-ginza-electra = "^5.1.2"
 mecab-python3 = "^1.0.6"
 cabocha-python = "^0.69.3"
+japanize-matplotlib = "^1.1.3"
 
 
 [build-system]
