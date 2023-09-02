@@ -557,7 +557,7 @@ def get_description_keywords(chunk_list: List[Chunk]) -> List[str]:
 
 
 def main():
-    category_name = "emulsion_cleam"
+    category_name = "soup"
     item_folder_names = get_all_folder_names(
         f"{current_path}/csv/{category_name}/items"
     )
@@ -603,8 +603,10 @@ def main():
         for i in range(len(review_df)):
             match_count = 0
             match_tokens: List[str] = []
-            review: str = review_df.loc[i, "content"]
-            review_sentence_list = review.split("\n")
+            review_title = str(review_df.loc[i, "title"]).strip("\n")
+            review_content = str(review_df.loc[i, "content"])
+            review_sentence_list = review_content.split("\n")
+            review_sentence_list.append(review_title)
             evaluation_expressions: List[str] = []
             for sentence in review_sentence_list:
                 chunk_list = get_chunk_list(sentence=sentence)
@@ -650,7 +652,7 @@ def main():
                     "match_count": match_count,
                     "match_tokens": match_tokens,
                     "evaluation": evaluation_expressions,
-                    "review_text": review,
+                    "review_text": review_content,
                 }
             )
         reviews_evaluation_informations_token = list(
