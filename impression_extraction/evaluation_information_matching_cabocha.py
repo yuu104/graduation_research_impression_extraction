@@ -356,7 +356,7 @@ def is_evaluation_expressions(token: Token, description_keywords: List[str]) -> 
     base = token["base"]
     pos = token["pos"]
     pos_detail = token["pos_detail"]
-    match_tokens = list(  # 評価値表見辞書に含まれる単語かどうかを調べる
+    match_tokens = list(  # 評価値表現辞書に含まれる単語かどうかを調べる
         filter(
             lambda item: item in [surface, base],
             evaluation_value_expressions,
@@ -585,11 +585,11 @@ def main():
             data=list(description_keywords), columns=["keyword"]
         )
         os.makedirs(
-            f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}",
+            f"{current_path}/csv/{category_name}/evaluation_information_matching/{item_folder_name}",
             exist_ok=True,
         )
         description_keywords_df.to_csv(
-            f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}/{item_folder_name}_description.csv"
+            f"{current_path}/csv/{category_name}/evaluation_information_matching/{item_folder_name}/{item_folder_name}_description.csv"
         )
 
         ## レビュー文から印象情報<対象, 属性, 評価表現>を抽出し、データフレームを作成
@@ -685,7 +685,7 @@ def main():
             reviews_evaluation_informations_token
         )
         reviews_evaluation_informations_token_df.to_csv(
-            f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/{item_folder_name}/{item_folder_name}_review.csv"
+            f"{current_path}/csv/{category_name}/evaluation_information_matching/{item_folder_name}/{item_folder_name}_review.csv"
         )
 
     ## 役立ち数ごとのレビュー数を表したデータフレームと相関関係の統計処理結果を表したデータフレームを作成
@@ -738,14 +738,17 @@ def main():
         }
     ]
     match_token_rate_df = pd.DataFrame(match_token_rate)
+    os.mkdirs(
+        f"{current_path}/csv/{category_name}/evaluation_information_matching/analysis"
+    )
     useful_count_count_df.to_csv(
-        f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/useful_count_count.csv"
+        f"{current_path}/csv/{category_name}/evaluation_information_matching/analysis/useful_count_count.csv"
     )
     match_token_rate_df.to_csv(
-        f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/match_token_rate.csv"
+        f"{current_path}/csv/{category_name}/evaluation_information_matching/analysis/match_token_rate.csv"
     )
     correlation_pair_df.to_csv(
-        f"{current_path}/csv/{category_name}/evaluation_information_matching/cabocha/correlation_pair.csv"
+        f"{current_path}/csv/{category_name}/evaluation_information_matching/analysis/correlation_pair.csv"
     )
 
 
