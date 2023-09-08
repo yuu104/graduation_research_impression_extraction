@@ -738,17 +738,15 @@ def main():
         }
     ]
     match_token_rate_df = pd.DataFrame(match_token_rate)
-    os.makedirs(
-        f"{current_path}/csv/{category_name}/evaluation_information_matching/analysis"
-    )
+    os.makedirs(f"{current_path}/csv/{category_name}/analysis")
     useful_count_count_df.to_csv(
-        f"{current_path}/csv/{category_name}/evaluation_information_matching/analysis/useful_count_count.csv"
+        f"{current_path}/csv/{category_name}/analysis/useful_count_count.csv"
     )
     match_token_rate_df.to_csv(
-        f"{current_path}/csv/{category_name}/evaluation_information_matching/analysis/match_token_rate.csv"
+        f"{current_path}/csv/{category_name}/analysis/match_token_rate.csv"
     )
     correlation_pair_df.to_csv(
-        f"{current_path}/csv/{category_name}/evaluation_information_matching/analysis/correlation_pair.csv"
+        f"{current_path}/csv/{category_name}/analysis/correlation_pair.csv"
     )
 
 
