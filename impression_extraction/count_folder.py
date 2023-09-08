@@ -13,6 +13,7 @@ def count_subfolders(folder_path):
 
 if __name__ == "__main__":
     current_path = os.path.dirname(os.path.abspath(__file__))
-    folder_path = f"{current_path}/csv/emulsion_cleam"  # 対象のフォルダのパスを指定
+    # 対象のフォルダのパスを指定
+    folder_path = f"{current_path}/csv/soup/evaluation_information_matching"
     subfolder_count = count_subfolders(folder_path)
     print(f"Subfolder count: {subfolder_count}")

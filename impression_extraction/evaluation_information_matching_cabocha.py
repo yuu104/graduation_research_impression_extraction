@@ -557,13 +557,17 @@ def get_description_keywords(chunk_list: List[Chunk]) -> List[str]:
 
 
 def main():
-    category_name = "soup"
+    category_name = "irons_steamers"
     item_folder_names = get_all_folder_names(
         f"{current_path}/csv/{category_name}/items"
     )
 
     correlation_pair: List[CorrelationPair] = []
+    item_count = 0
     for item_folder_name in item_folder_names:
+        if item_count >= 300:  # 最大300件を分析する
+            break
+
         # 説明文からキーワードを抽出し、データフレームを作成
         description_df = pd.read_csv(
             f"{current_path}/csv/{category_name}/items/{item_folder_name}/{item_folder_name}_description.csv",
@@ -571,11 +575,18 @@ def main():
             index_col=0,
         )
         description = description_df.loc[0, "description"]
-        description_sentence_list = description.split("\n")
+        # 説明文の内容が豊富でない場合は分析対象外
+        description_sentence_list = list(
+            filter(
+                lambda item: len(item) >= 5 and len(item) <= 100,
+                description.split("\n"),
+            )
+        )
+        if len(description_sentence_list) < 10:
+            continue
+
         description_keywords: List[str] = []
         for sentence in description_sentence_list:
-            if len(sentence) > 100:  # センテンスの文字数が長すぎるものは対象外
-                continue
             chunk_list = get_chunk_list(sentence=sentence)
             if not chunk_list:
                 continue
@@ -687,6 +698,8 @@ def main():
         reviews_evaluation_informations_token_df.to_csv(
             f"{current_path}/csv/{category_name}/evaluation_information_matching/{item_folder_name}/{item_folder_name}_review.csv"
         )
+
+        item_count += 1
 
     ## 役立ち数ごとのレビュー数を表したデータフレームと相関関係の統計処理結果を表したデータフレームを作成
     correlation_pair_df = pd.DataFrame(data=correlation_pair)
