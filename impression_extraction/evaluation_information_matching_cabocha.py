@@ -738,7 +738,7 @@ def main():
         }
     ]
     match_token_rate_df = pd.DataFrame(match_token_rate)
-    os.mkdirs(
+    os.makedirs(
         f"{current_path}/csv/{category_name}/evaluation_information_matching/analysis"
     )
     useful_count_count_df.to_csv(
