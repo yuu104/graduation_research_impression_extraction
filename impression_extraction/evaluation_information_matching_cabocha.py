@@ -737,7 +737,7 @@ def main():
                 (correlation_pair_df["useful_count"] >= 3)
                 & (correlation_pair_df["useful_count"] <= 4)
             ]["match_count"].mean(),
-            "4〜6人": correlation_pair_df[
+            "5〜6人": correlation_pair_df[
                 (correlation_pair_df["useful_count"] >= 5)
                 & (correlation_pair_df["useful_count"] <= 6)
             ]["match_count"].mean(),
