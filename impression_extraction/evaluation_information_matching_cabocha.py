@@ -556,10 +556,49 @@ def get_description_keywords(chunk_list: List[Chunk]) -> List[str]:
     return keywords
 
 
+def filter_by_richness_description(
+    item_folder_names: List[str], category_name: str
+) -> List[str]:
+    """
+    分析対象の商品群を、説明文の豊富さでフィルタリングする
+
+    Parameters
+    ----------
+    item_folder_names: List[str]
+        商品群のファイル名
+    category_name: str
+        カテゴリ名
+
+    Returns
+    -------
+    filtered_item_folder_names: List[str]
+    """
+
+    filtered_item_folder_names: List[str] = []
+    for item_folder_name in item_folder_names:
+        description_df = pd.read_csv(
+            f"{current_path}/csv/{category_name}/items/{item_folder_name}/{item_folder_name}_description.csv",
+            sep=",",
+            index_col=0,
+        )
+        description = description_df.loc[0, "description"]
+        description_sentence_list = list(
+            filter(
+                lambda item: len(item) >= 5 and len(item) <= 100,
+                description.split("\n"),
+            )
+        )
+        if len(description_sentence_list) < 10:
+            continue
+
+        filtered_item_folder_names.append(item_folder_name)
+    return filtered_item_folder_names
+
+
 def main():
     category_name = "irons_steamers"
-    item_folder_names = get_all_folder_names(
-        f"{current_path}/csv/{category_name}/items"
+    item_folder_names = filter_by_richness_description(
+        get_all_folder_names(f"{current_path}/csv/{category_name}/items")
     )
 
     correlation_pair: List[CorrelationPair] = []
@@ -575,15 +614,7 @@ def main():
             index_col=0,
         )
         description = description_df.loc[0, "description"]
-        # 説明文の内容が豊富でない場合は分析対象外
-        description_sentence_list = list(
-            filter(
-                lambda item: len(item) >= 5 and len(item) <= 100,
-                description.split("\n"),
-            )
-        )
-        if len(description_sentence_list) < 10:
-            continue
+        description_sentence_list = description.split("\n")
 
         description_keywords: List[str] = []
         for sentence in description_sentence_list:
