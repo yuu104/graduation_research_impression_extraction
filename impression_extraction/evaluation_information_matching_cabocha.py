@@ -572,6 +572,7 @@ def filter_by_richness_description(
     Returns
     -------
     filtered_item_folder_names: List[str]
+        フィルタリングされた商品群のファイル名
     """
 
     filtered_item_folder_names: List[str] = []
