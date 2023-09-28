@@ -596,6 +596,37 @@ def filter_by_richness_description(
     return filtered_item_folder_names
 
 
+def filter_by_review_count(
+    item_folder_names: List[str], category_name: str
+) -> List[str]:
+    """
+    分析対象の商品群を、レビュー数の豊富さでフィルタリングする
+
+    Parameters
+    ----------
+    item_folder_names: List[str]
+        商品群のファイル名
+    category_name: str
+        カテゴリ名
+
+    Returns
+    -------
+    filtered_item_folder_names: List[str]
+        フィルタリングされた商品群のファイル名
+    """
+
+    filtered_item_folder_names: List[str] = []
+    for item_folder_name in item_folder_names:
+        review_df = pd.read_csv(
+            f"{current_path}/csv/{category_name}/items/{item_folder_name}/{item_folder_name}_review.csv",
+            sep=",",
+            index_col=0,
+        )
+        if len(review_df) >= 50:
+            filtered_item_folder_names.append(item_folder_name)
+    return filtered_item_folder_names
+
+
 def main():
     category_name = "irons_steamers"
     item_folder_names = filter_by_richness_description(
